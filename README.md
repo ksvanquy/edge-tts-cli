@@ -18,6 +18,15 @@ python -m tts_cli batch scripts --voice vi-VN-NamMinhNeural --rate +0% --pitch +
 python -m tts_cli voices --language vi
 ```
 
+`generate` là subcommand tường minh. Khi chỉ tạo một project từ text hoặc file, có thể bỏ qua `generate`; CLI sẽ tự nhận diện lệnh này:
+
+```powershell
+python -m tts_cli -f scripts\script1.txt --voice vi-VN-NamMinhNeural --rate +0% --pitch +0Hz --volume +0%
+python -m tts_cli -t "Xin chào" --voice vi-VN-NamMinhNeural
+```
+
+Shortcut này chỉ áp dụng cho `generate`. Các lệnh `batch` và `voices` vẫn cần ghi rõ tên subcommand.
+
 The `generate` command accepts UTF-8 `TXT`, `SRT`, and `VTT` files. For subtitle files, cue numbers, timestamps, and WebVTT metadata are removed before the text is sent to Edge TTS. By default, each project contains `audio.mp3` and `subtitle.srt`. Use `--formats` with a comma-separated list of `mp3`, `srt`, `vtt`, and `json` to choose the output artifacts. The subtitle formats are written as `subtitle.srt`, `subtitle.vtt`, and `subtitle.json`.
 
 Output handling is separated into an Output Module. `OutputResolver` dispatches each selected format to its own handler and manages the artifact paths in the numbered project folder. If synthesis or output writing fails, incomplete artifacts from the current run are cleaned up automatically.
