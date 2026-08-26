@@ -3,6 +3,7 @@ from pathlib import Path
 from tts_cli.core.config import validate_args
 from tts_cli.core.models import TTSConfig
 from tts_cli.services.batch import BatchService
+from tts_cli.services.edge_tts_engine import EdgeTTSEngine
 from tts_cli.services.tts import TTSService
 from tts_cli.services.voices import list_voices
 from tts_cli.text.resolver import InputResolver
@@ -17,7 +18,7 @@ async def async_main(args) -> int:
         if args.text is not None and args.file:
             raise ValueError("Không thể dùng --text và --file cùng lúc.")
         config = TTSConfig(args.voice, args.rate, args.pitch, args.volume, args.retries, args.timeout, args.proxy)
-        service = TTSService(config)
+        service = TTSService(EdgeTTSEngine(config), config)
         await service.generate(
             InputResolver().resolve(args).text, Path(args.output), args.subtitle_mode,
             args.max_words, args.start, args.overwrite, args.dry_run, formats=args.formats,
@@ -26,7 +27,7 @@ async def async_main(args) -> int:
     if args.command == "batch":
         validate_args(args)
         config = TTSConfig(args.voice, args.rate, args.pitch, args.volume, args.retries, args.timeout, args.proxy)
-        await BatchService(TTSService(config)).process(
+        await BatchService(TTSService(EdgeTTSEngine(config), config)).process(
             Path(args.directory), Path(args.output), args.recursive,
             args.subtitle_mode, args.max_words, args.start, args.skip_existing,
             args.continue_on_error, args.dry_run, args.formats,

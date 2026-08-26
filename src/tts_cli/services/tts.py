@@ -1,10 +1,9 @@
 import asyncio
 from pathlib import Path
 
-import edge_tts
-
 from tts_cli.console.printer import print_warning
 from tts_cli.console.progress import ProgressBar
+from tts_cli.core.interfaces import TTSEngine
 from tts_cli.core.models import SubtitleCue, TTSConfig
 from tts_cli.output.formats import OutputContext
 from tts_cli.output.project import get_next_number
@@ -17,39 +16,9 @@ from tts_cli.text.processor import normalize_text
 class TTSService:
     """Owns Edge TTS synthesis and project artifact generation."""
 
-    def __init__(self, config: TTSConfig):
+    def __init__(self, engine: TTSEngine, config: TTSConfig):
+        self.engine = engine
         self.config = config
-
-    async def synthesize_once(self, text: str, audio_path: Path) -> list[SubtitleCue]:
-        communicate = edge_tts.Communicate(
-            text=text,
-            voice=self.config.voice,
-            rate=self.config.rate,
-            pitch=self.config.pitch,
-            volume=self.config.volume,
-            boundary="WordBoundary",
-            proxy=self.config.proxy,
-            connect_timeout=int(self.config.timeout),
-            receive_timeout=int(self.config.timeout),
-        )
-        word_cues = []
-        with audio_path.open("wb") as audio_file:
-            async for chunk in communicate.stream():
-                if chunk.get("type") == "audio":
-                    audio_data = chunk.get("data")
-                    if isinstance(audio_data, bytes):
-                        audio_file.write(audio_data)
-                elif chunk.get("type") == "WordBoundary":
-                    try:
-                        offset = int(chunk.get("offset", 0))
-                        duration = int(chunk.get("duration", 0))
-                        word = str(chunk.get("text", ""))
-                    except (TypeError, ValueError) as exc:
-                        print_warning(f"Bỏ qua WordBoundary không hợp lệ: {exc}")
-                        continue
-                    if word.strip() and offset >= 0 and duration >= 0:
-                        word_cues.append(SubtitleCue(offset // 10, (offset + duration) // 10, word))
-        return word_cues
 
     async def synthesize_with_retry(self, text: str, audio_path: Path) -> list[SubtitleCue]:
         total_attempts = self.config.retries + 1
@@ -57,7 +26,7 @@ class TTSService:
         for attempt in range(1, total_attempts + 1):
             print(f"  🎙️ TTS {attempt}/{total_attempts}")
             try:
-                return await asyncio.wait_for(self.synthesize_once(text, audio_path), timeout=self.config.timeout)
+                return await asyncio.wait_for(self.engine.synthesize(text, audio_path), timeout=self.config.timeout)
             except Exception as exc:
                 last_error = exc
                 if audio_path.exists():
@@ -101,6 +70,7 @@ class TTSService:
             return number
         if folder.exists() and not overwrite:
             raise FileExistsError(f"Folder output đã tồn tại: {folder}")
+        folder_created = not folder.exists()
         folder.mkdir(parents=True, exist_ok=True)
         progress = ProgressBar(3, "Generate")
         progress.update(0, "TTS")
@@ -114,6 +84,9 @@ class TTSService:
                 formats,
             )
             progress.update(3, "hoàn tất")
+        except Exception:
+            output_resolver.cleanup(folder, formats, remove_folder=folder_created)
+            raise
         finally:
             progress.finish()
         duration = format_duration(word_cues[-1].end) if word_cues else "0.00s"

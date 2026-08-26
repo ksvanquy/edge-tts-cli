@@ -35,3 +35,15 @@ def test_output_resolver_rejects_unknown_format():
         assert "xml" in str(exc)
     else:
         raise AssertionError("Expected unsupported format to be rejected")
+
+
+def test_output_resolver_cleans_partial_artifacts(tmp_path):
+    folder = tmp_path / "001"
+    folder.mkdir()
+    (folder / "audio.mp3").write_bytes(b"partial")
+    (folder / "subtitle.srt").write_text("partial", encoding="utf-8")
+    resolver = OutputResolver()
+
+    resolver.cleanup(folder, "mp3,srt", remove_folder=True)
+
+    assert not folder.exists()
