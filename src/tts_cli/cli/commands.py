@@ -20,7 +20,7 @@ async def async_main(args) -> int:
         service = TTSService(config)
         await service.generate(
             InputResolver().resolve(args).text, Path(args.output), args.subtitle_mode,
-            args.max_words, args.start, args.overwrite, args.dry_run,
+            args.max_words, args.start, args.overwrite, args.dry_run, formats=args.formats,
         )
         return 0
     if args.command == "batch":
@@ -29,7 +29,7 @@ async def async_main(args) -> int:
         await BatchService(TTSService(config)).process(
             Path(args.directory), Path(args.output), args.recursive,
             args.subtitle_mode, args.max_words, args.start, args.skip_existing,
-            args.continue_on_error, args.dry_run,
+            args.continue_on_error, args.dry_run, args.formats,
         )
         return 0
     return 2

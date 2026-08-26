@@ -52,9 +52,9 @@ class SubtitleInputReader(InputReader):
             next_line = lines[index + 1].strip() if index + 1 < len(lines) else ""
             if (
                 not stripped
-                or stripped.isdigit()
                 or TIMESTAMP_LINE.match(stripped)
                 or TIMESTAMP_LINE.match(next_line)
+                or (stripped.isdigit() and TIMESTAMP_LINE.match(next_line))
             ):
                 continue
             result.append(stripped)

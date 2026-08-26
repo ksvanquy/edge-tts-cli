@@ -27,6 +27,11 @@ def add_subtitle_options(parser: argparse.ArgumentParser) -> None:
 def add_output_options(parser: argparse.ArgumentParser) -> None:
     group = parser.add_argument_group("Output")
     group.add_argument("-o", "--output", default=DEFAULT_OUTPUT)
+    group.add_argument(
+        "--formats",
+        default="mp3,srt",
+        help="Định dạng output, phân cách bằng dấu phẩy: mp3,srt,vtt,json",
+    )
     group.add_argument("--start", type=int, default=1)
     group.add_argument("--overwrite", action="store_true")
     group.add_argument("--skip-existing", action="store_true")
@@ -44,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_tts_options(generate)
     add_subtitle_options(generate)
     add_output_options(generate)
-    batch = subparsers.add_parser("batch", help="Xử lý nhiều file TXT")
+    batch = subparsers.add_parser("batch", help="Xử lý nhiều file TXT, SRT hoặc VTT")
     batch.add_argument("directory")
     batch.add_argument("--recursive", action="store_true")
     batch.add_argument("--continue-on-error", action="store_true")

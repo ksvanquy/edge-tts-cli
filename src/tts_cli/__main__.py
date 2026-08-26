@@ -6,6 +6,24 @@ from tts_cli.cli.parser import build_parser
 from tts_cli.console.printer import print_error
 
 
+def error_hint(exc: Exception) -> str | None:
+    if isinstance(exc, FileNotFoundError):
+        return "kiểm tra lại đường dẫn file hoặc thư mục input."
+    if isinstance(exc, IsADirectoryError):
+        return "hãy truyền đường dẫn tới một file input cụ thể."
+    if isinstance(exc, FileExistsError):
+        return "dùng --overwrite để ghi đè hoặc đổi --output/--start."
+    if isinstance(exc, UnicodeDecodeError):
+        return "hãy lưu file input ở encoding UTF-8."
+    if isinstance(exc, TimeoutError):
+        return "tăng --timeout hoặc kiểm tra kết nối mạng."
+    if isinstance(exc, ConnectionError):
+        return "kiểm tra kết nối mạng, voice và --proxy nếu đang dùng proxy."
+    if isinstance(exc, ValueError):
+        return "chạy `python -m tts_cli <command> --help` để xem cú pháp hợp lệ."
+    return None
+
+
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args(normalize_argv(sys.argv[1:]))
@@ -15,7 +33,7 @@ def main() -> None:
         print("\n⚠️ Đã hủy.")
         sys.exit(130)
     except Exception as exc:
-        print_error(str(exc))
+        print_error(str(exc), error_hint(exc))
         sys.exit(1)
 
 

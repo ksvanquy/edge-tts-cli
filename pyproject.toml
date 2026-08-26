@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "edge-tts-cli"
 version = "1.0.0"
-description = "CLI for converting text to Edge TTS audio and SRT subtitles"
+description = "CLI for converting text to Edge TTS audio and subtitle formats"
 requires-python = ">=3.10"
 dependencies = ["edge-tts>=6.1.0"]
 

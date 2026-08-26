@@ -1,8 +1,10 @@
 import sys
 
 
-def print_error(message: str) -> None:
+def print_error(message: str, hint: str | None = None) -> None:
     print(f"❌ {message}", file=sys.stderr)
+    if hint:
+        print(f"   Gợi ý: {hint}", file=sys.stderr)
 
 
 def print_warning(message: str) -> None:

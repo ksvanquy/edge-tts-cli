@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from tts_cli.services.tts import TTSService
+from tts_cli.output.resolver import OutputResolver
+from tts_cli.console.progress import ProgressBar
 from tts_cli.text.resolver import InputResolver
 
 
@@ -30,6 +32,7 @@ class BatchService:
         skip_existing: bool,
         continue_on_error: bool,
         dry_run: bool,
+        formats: str | list[str] | None = None,
     ) -> None:
         if not source.exists():
             raise FileNotFoundError(f"Không tìm thấy thư mục: {source}")
@@ -41,15 +44,21 @@ class BatchService:
             return
 
         success = failed = skipped = 0
+        output_resolver = OutputResolver()
+        input_resolver = InputResolver()
+        required_files = output_resolver.required_files(formats)
+        progress = ProgressBar(len(files), "Batch")
         for index, file_path in enumerate(files):
             project_number = start + index
+            progress.update(index, file_path.name)
             try:
-                text = InputResolver().resolve_file(file_path).text
+                text = input_resolver.resolve_file(file_path).text
                 folder = output_root / f"{project_number:03d}"
-                complete = all((folder / name).exists() for name in ("audio.mp3", "subtitle.srt"))
+                complete = all((folder / name).exists() for name in required_files)
                 if skip_existing and complete:
                     print(f"  ⏭️ Skip {folder}")
                     skipped += 1
+                    progress.update(index + 1, file_path.name)
                     continue
                 await self.tts_service.generate(
                     text=text,
@@ -60,11 +69,15 @@ class BatchService:
                     overwrite=True,
                     dry_run=dry_run,
                     project_number=project_number,
+                    formats=formats,
                 )
                 success += 1
             except Exception as exc:
                 failed += 1
                 print(f"❌ {file_path}: {exc}")
                 if not continue_on_error:
+                    progress.finish()
                     raise
+            progress.update(index + 1, file_path.name)
+        progress.finish()
         print(f"✅ Success: {success} | ⏭️ Skipped: {skipped} | ❌ Failed: {failed}")
