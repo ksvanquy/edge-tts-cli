@@ -1,0 +1,2 @@
+[console_scripts]
+tts = tts_cli.__main__:main

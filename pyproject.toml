@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edge-tts-cli"
+version = "1.0.0"
+description = "CLI for converting text to Edge TTS audio and SRT subtitles"
+requires-python = ">=3.10"
+dependencies = ["edge-tts>=6.1.0"]
+
+[project.scripts]
+tts = "tts_cli.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
