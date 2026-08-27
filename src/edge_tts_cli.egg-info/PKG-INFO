@@ -1,6 +1,10 @@
 Metadata-Version: 2.4
 Name: edge-tts-cli
 Version: 1.0.0
-Summary: CLI for converting text to Edge TTS audio and SRT subtitles
+Summary: CLI for converting text to Edge TTS audio and subtitle formats
 Requires-Python: >=3.10
 Requires-Dist: edge-tts>=6.1.0
+Provides-Extra: google
+Requires-Dist: google-cloud-texttospeech>=2.16.0; extra == "google"
+Provides-Extra: whisper
+Requires-Dist: faster-whisper>=1.0.0; extra == "whisper"

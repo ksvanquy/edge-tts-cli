@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from tts_cli.text.processor import normalize_text
-from tts_cli.text.resolver import InputResolver
+from tts_cli.input.processor import normalize_text
+from tts_cli.input.resolver import InputResolver
 
 
 def test_normalize_text_removes_bom_and_empty_lines():

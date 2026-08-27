@@ -16,6 +16,8 @@ python -m tts_cli batch scripts --recursive
 python -m tts_cli batch scripts --formats mp3,srt,json
 python -m tts_cli batch scripts --voice vi-VN-NamMinhNeural --rate +0% --pitch +0Hz --volume +0%
 python -m tts_cli voices --language vi
+python -m tts_cli transcribe scripts\audio.wav --engine whisper --output subtitle.srt
+python -m tts_cli transcribe videos\input.mp4 --engine whisper --language vi --output subtitle.srt
 ```
 
 `generate` là subcommand tường minh. Khi chỉ tạo một project từ text hoặc file, có thể bỏ qua `generate`; CLI sẽ tự nhận diện lệnh này:
@@ -59,18 +61,21 @@ python -m tts_cli generate -f scripts\script1.txt --voice vi-VN-NamMinhNeural
 The project uses a layered `src` layout:
 
 ```text
-CLI arguments
-	-> InputResolver
-	-> ResolvedInput
-	-> TTSService
-		-> TTSEngine
-			-> EdgeTTSEngine
-		-> Subtitle cue builder
-		-> OutputResolver
-			-> MP3, SRT, VTT, JSON handlers
+CLI
+	-> application use cases
+		-> input readers and resolver
+		-> providers/tts (Edge, Google)
+		-> providers/stt (Whisper, Google, ...)
+		-> providers/media (FFmpeg)
+		-> subtitle and output handlers
 ```
 
-`TTSEngine` is the core interface. `EdgeTTSEngine` contains the Edge TTS API integration, audio streaming, and `WordBoundary` parsing. `TTSService` coordinates normalization, retry, subtitle generation, progress, and output dispatch without depending directly on the Edge TTS library. Output format handlers are responsible only for writing their own artifacts.
+`core` defines the provider boundaries and domain models. `application` contains
+the `SynthesizeUseCase`, `BatchProcessUseCase`, and `TranscribeUseCase` workflows.
+`providers` contains integrations for TTS, speech-to-text, and media processing.
+`input` owns text normalization and TXT/SRT/VTT readers. `subtitle` and `output`
+remain provider-independent and are responsible for cue processing and artifact
+writing.
 
 ## TTS Parameters
 
@@ -118,6 +123,59 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
+### Google Cloud Text-to-Speech
+
+Google TTS là dependency tùy chọn. Cài project cùng Google Cloud client:
+
+```powershell
+python -m pip install -e ".[google]"
+```
+
+Tạo một Google Cloud project, bật **Cloud Text-to-Speech API**, tạo service account
+và tải file JSON credentials. Trỏ biến môi trường
+`GOOGLE_APPLICATION_CREDENTIALS` tới file đó:
+
+```powershell
+$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\path\to\service-account.json"
+```
+
+Kiểm tra danh sách voice Google:
+
+```powershell
+python -m tts_cli voices --engine google --language en-US
+```
+
+Sử dụng tên voice Google khi tạo audio:
+
+```powershell
+python -m tts_cli generate `
+	--engine google `
+	--voice en-US-Neural2-A `
+	--text "Hello from Google Cloud Text-to-Speech"
+```
+
+Google Cloud TTS tạo audio MP3 nhưng provider hiện không trả về word timing,
+vì vậy subtitle timing có thể rỗng. Edge TTS vẫn là engine mặc định và hỗ trợ
+`WordBoundary` để tạo subtitle theo từ.
+
+### Audio/video to SRT
+
+Cài Whisper local và đảm bảo `ffmpeg` có trong `PATH`:
+
+```powershell
+python -m pip install -e ".[whisper]"
+```
+
+Transcribe file audio trực tiếp hoặc video thông qua audio track:
+
+```powershell
+python -m tts_cli transcribe audio.wav --engine whisper --output subtitle.srt
+python -m tts_cli transcribe video.mp4 --engine whisper --language vi --model-size small
+```
+
+Whisper mặc định chạy bằng CPU với model `base`. Dùng `--device cuda` nếu môi
+trường đã cài CUDA tương thích với `faster-whisper`.
+
 After activation, run the CLI with the virtual environment's Python:
 
 ```powershell
@@ -128,7 +186,7 @@ Run the test suite with:
 
 ```powershell
 python -m pytest
-``
+```
 
 Run focused tests while developing:
 

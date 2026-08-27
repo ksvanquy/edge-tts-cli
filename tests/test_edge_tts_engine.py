@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 
 from tts_cli.core.models import SubtitleCue, TTSConfig
-from tts_cli.services.edge_tts_engine import EdgeTTSEngine
+from tts_cli.providers.tts.edge import EdgeTTSEngine
 
 
 def test_edge_tts_engine_writes_audio_and_collects_word_boundaries(tmp_path: Path, monkeypatch):
@@ -20,11 +20,12 @@ def test_edge_tts_engine_writes_audio_and_collects_word_boundaries(tmp_path: Pat
 
             return chunks()
 
-    monkeypatch.setattr("tts_cli.services.edge_tts_engine.edge_tts.Communicate", FakeCommunicate)
+    monkeypatch.setattr("tts_cli.providers.tts.edge.edge_tts.Communicate", FakeCommunicate)
     audio_path = tmp_path / "audio.mp3"
     config = TTSConfig("vi-VN-NamMinhNeural", "+0%", "+0Hz", "+0%", 0, 1.0, None)
 
     result = asyncio.run(EdgeTTSEngine(config).synthesize("Xin", audio_path))
 
     assert audio_path.read_bytes() == b"audio"
-    assert result == [SubtitleCue(1_000_000, 1_500_000, "Xin")]
+    assert result.word_cues == [SubtitleCue(1_000_000, 1_500_000, "Xin")]
+    assert result.metadata == {"provider": "edge"}

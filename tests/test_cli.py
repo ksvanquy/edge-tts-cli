@@ -35,3 +35,11 @@ def test_batch_parser_reads_batch_options():
     assert args.directory == "scripts"
     assert args.recursive is True
     assert args.skip_existing is True
+
+
+def test_parser_accepts_google_engine_for_generate_and_voices():
+    generate_args = build_parser().parse_args(["generate", "--engine", "google", "--text", "Xin"])
+    voices_args = build_parser().parse_args(["voices", "--engine", "google"])
+
+    assert generate_args.engine == "google"
+    assert voices_args.engine == "google"
