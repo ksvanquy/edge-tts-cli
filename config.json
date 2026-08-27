@@ -1,0 +1,50 @@
+{
+    "generate_values": {
+        "engine": "edge",
+        "voice": "vi-VN-NamMinhNeural",
+        "rate": "-62%",
+        "pitch": "-10Hz",
+        "volume": "+43%",
+        "subtitle_mode": "phrase",
+        "max_words": 8,
+        "output": "D:/DEV/edge-tts-cli/output",
+        "formats": "mp3,srt,vtt,json",
+        "retries": 5,
+        "timeout": 64.0,
+        "proxy": null,
+        "text": "",
+        "file": ""
+    },
+    "batch_values": {
+        "engine": "edge",
+        "voice": "vi-VN-HoaiMyNeural",
+        "rate": "+0%",
+        "pitch": "+0Hz",
+        "volume": "+0%",
+        "subtitle_mode": "phrase",
+        "max_words": 8,
+        "output": "output",
+        "formats": "mp3,srt",
+        "retries": 3,
+        "timeout": 60.0,
+        "proxy": null,
+        "directory": "",
+        "recursive": false,
+        "skip_existing": false,
+        "continue_on_error": false,
+        "dry_run": false
+    },
+    "transcribe_values": {
+        "source": "",
+        "output": "subtitle.srt",
+        "model_size": "base",
+        "language": "",
+        "device": "auto"
+    },
+    "voices_values": {
+        "engine": "edge",
+        "language": "",
+        "gender": "",
+        "search": ""
+    }
+}

@@ -10,6 +10,7 @@ src/tts_cli/__init__.py
 src/tts_cli/__main__.py
 src/tts_cli/adapters/__init__.py
 src/tts_cli/adapters/console/__init__.py
+src/tts_cli/adapters/console/events.py
 src/tts_cli/adapters/console/printer.py
 src/tts_cli/adapters/console/progress.py
 src/tts_cli/adapters/input/__init__.py
@@ -25,6 +26,8 @@ src/tts_cli/adapters/subtitle/cues.py
 src/tts_cli/adapters/subtitle/srt.py
 src/tts_cli/application/__init__.py
 src/tts_cli/application/batch_process.py
+src/tts_cli/application/bus.py
+src/tts_cli/application/composition.py
 src/tts_cli/application/synthesize.py
 src/tts_cli/application/transcribe.py
 src/tts_cli/application/voice_listing.py
@@ -38,6 +41,7 @@ src/tts_cli/core/capabilities.py
 src/tts_cli/core/config.py
 src/tts_cli/core/constants.py
 src/tts_cli/core/errors.py
+src/tts_cli/core/events.py
 src/tts_cli/core/interfaces.py
 src/tts_cli/core/models.py
 src/tts_cli/providers/__init__.py
@@ -62,16 +66,15 @@ src/tts_cli/ui/__init__.py
 src/tts_cli/ui/app.py
 src/tts_cli/ui/desktop.py
 src/tts_cli/ui/state.py
-src/tts_cli/ui/components/config_controls.py
-src/tts_cli/ui/components/error_panel.py
-src/tts_cli/ui/components/header.py
-src/tts_cli/ui/components/navigation.py
-src/tts_cli/ui/components/progress.py
-src/tts_cli/ui/views/__init__.py
+src/tts_cli/ui/components/formats_widget.py
+src/tts_cli/ui/components/slider_row.py
+src/tts_cli/ui/components/tts_config_widget.py
 src/tts_cli/ui/views/batch_view.py
 src/tts_cli/ui/views/generate_view.py
 src/tts_cli/ui/views/transcribe_view.py
 src/tts_cli/ui/views/voices_view.py
+src/tts_cli/ui/windows/main_window.py
+tests/test_bus.py
 tests/test_cli.py
 tests/test_commands.py
 tests/test_edge_tts_engine.py

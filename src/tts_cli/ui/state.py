@@ -1,4 +1,6 @@
 from dataclasses import dataclass, field
+import json
+from pathlib import Path
 from typing import Any, Literal
 
 from tts_cli.cli.constants import DEFAULT_MAX_WORDS, DEFAULT_OUTPUT, DEFAULT_SUBTITLE_MODE
@@ -39,6 +41,39 @@ class AppState:
     voices_values: dict[str, Any] = field(default_factory=lambda: {
         "engine": "edge", "language": "", "gender": "", "search": "",
     })
+
+    def save_to_file(self, filepath: str | Path = "config.json") -> None:
+        """Lưu toàn bộ state cấu hình hiện tại ra file JSON."""
+        try:
+            data = {
+                "generate_values": self.generate_values,
+                "batch_values": self.batch_values,
+                "transcribe_values": self.transcribe_values,
+                "voices_values": self.voices_values,
+            }
+            Path(filepath).write_text(json.dumps(data, ensure_ascii=False, indent=4), encoding="utf-8")
+        except Exception as e:
+            print(f"Không thể lưu state: {e}")
+
+    @classmethod
+    def load_from_file(cls, filepath: str | Path = "config.json") -> "AppState":
+        """Khởi tạo AppState và nạp dữ liệu cũ từ file JSON nếu có."""
+        instance = cls()
+        path = Path(filepath)
+        if path.exists():
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                if "generate_values" in data:
+                    instance.generate_values.update(data["generate_values"])
+                if "batch_values" in data:
+                    instance.batch_values.update(data["batch_values"])
+                if "transcribe_values" in data:
+                    instance.transcribe_values.update(data["transcribe_values"])
+                if "voices_values" in data:
+                    instance.voices_values.update(data["voices_values"])
+            except Exception as e:
+                print(f"Lỗi đọc state từ file: {e}")
+        return instance
 
     def start(self) -> None:
         self.status = "Running"
