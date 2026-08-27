@@ -12,3 +12,5 @@ Provides-Extra: ui
 Requires-Dist: PySide6>=6.7.0; extra == "ui"
 Provides-Extra: desktop
 Requires-Dist: PySide6>=6.7.0; extra == "desktop"
+Provides-Extra: build
+Requires-Dist: PyInstaller>=6.10.0; extra == "build"

@@ -14,11 +14,11 @@ google = ["google-cloud-texttospeech>=2.16.0"]
 whisper = ["faster-whisper>=1.0.0"]
 ui = ["PySide6>=6.7.0"]
 desktop = ["PySide6>=6.7.0"]
+build = ["PyInstaller>=6.10.0"]
 
 [project.scripts]
 tts = "tts_cli.__main__:main"
 tts-ui = "tts_cli.ui.app:main"
-tts-desktop = "tts_cli.ui.desktop:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -64,7 +64,6 @@ src/tts_cli/services/transcription.py
 src/tts_cli/services/voice_catalog.py
 src/tts_cli/ui/__init__.py
 src/tts_cli/ui/app.py
-src/tts_cli/ui/desktop.py
 src/tts_cli/ui/state.py
 src/tts_cli/ui/components/formats_widget.py
 src/tts_cli/ui/components/slider_row.py

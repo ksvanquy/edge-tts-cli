@@ -1,21 +1,20 @@
 # Edge TTS CLI
 
-### UI desktop Windows
-UI desktop PySide6 được cung cấp dưới dạng dependency tùy chọn và dùng lại các
+### CLI
 
-python -m pip install -e ".[desktop]"
-tts-desktop
 ```powershell
 python -m tts_cli generate -f scripts\script1.txt
 python -m tts_cli generate -f scripts\script3.srt
 python -m tts_cli generate -f scripts\script4.vtt
 python -m tts_cli generate -f scripts\script3.srt --formats mp3,srt,vtt,json
 python -m tts_cli generate -f scripts\script1.txt --voice vi-VN-NamMinhNeural --rate +0% --pitch +0Hz --volume +0%
+```
 
 Ứng dụng mở trực tiếp trong cửa sổ Windows, không cần browser hoặc web server.
 UI có các mode Generate, Batch, Transcribe và Voices; provider Google/Whisper
 vẫn cần cài extra tương ứng. UI không gọi trực tiếp SDK, FFmpeg hoặc filesystem
 output ngoài các use case/adapter đã được wire ở composition root.
+```powershell
 python -m tts_cli batch scripts --recursive
 ```
 
@@ -135,28 +134,28 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
-### UI web
+### Build ứng dụng Windows
 
-UI desktop PySide6 được cung cấp dưới dạng dependency tùy chọn và dùng lại các
-application use case hiện có:
+UI PySide6 được cung cấp dưới dạng dependency tùy chọn. Để tạo file thực thi
+Windows bằng PyInstaller:
 
 ```powershell
-python -m pip install -e ".[desktop]"
-tts-desktop
+python -m pip install -e ".[desktop,build]"
+python -m PyInstaller --clean --noconfirm edge-tts-ui.spec
 ```
 
-Ứng dụng mở trực tiếp trong cửa sổ Windows, không cần browser hoặc web server.
-UI có các mode Generate, Batch, Transcribe và Voices; provider Google/Whisper
-vẫn cần cài extra tương ứng. UI không gọi trực tiếp SDK, FFmpeg hoặc filesystem
-output ngoài các use case/adapter đã được wire ở composition root.
+File thực thi được tạo tại `dist\edge-tts-ui.exe`. Có thể chạy trực
+tiếp file này trên Windows; ứng dụng mở trong cửa sổ, không cần browser hoặc web
+server. Provider Google/Whisper vẫn cần cài extra tương ứng trước khi build nếu
+muốn sử dụng các mode đó.
 
-### UI desktop Windows
+### UI desktop Windows trong môi trường phát triển
 
-`tts-ui` là alias tương thích tới cùng PySide6 application. Trong môi trường
-phát triển, có thể chạy trực tiếp:
+`tts-ui` trỏ trực tiếp tới cùng PySide6 application. Trong môi trường phát triển,
+có thể chạy:
 
 ```powershell
-python -m tts_cli.ui.desktop
+tts-ui
 ```
 
 ### Google Cloud Text-to-Speech
@@ -274,11 +273,7 @@ python -m pytest tests\test_output.py tests\test_cli.py tests\test_commands.py t
 
 The tests mock Edge TTS network calls, so the test suite runs offline. The current suite covers input normalization, TXT/SRT/VTT parsing, subtitle cue generation, validation, output handlers, CLI parsing, retry behavior, batch processing, progress, and voice filtering.
 
-python -m pip install -e ".[desktop]"
-tts-desktop
-python -m tts_cli.ui.desktop
-
-venv\Scripts\python.exe -m tts_cli.ui.desktop
-tts-desktop
+python -m pip install -e "[desktop]"
+tts-ui
 venv\Scripts\python.exe -m build
 venv\Scripts\python.exe -m pip install --force-reinstall dist\*.whl
