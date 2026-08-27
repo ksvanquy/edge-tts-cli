@@ -3,10 +3,13 @@ import sys
 
 from tts_cli.cli.commands import async_main, normalize_argv
 from tts_cli.cli.parser import build_parser
-from tts_cli.console.printer import print_error
+from tts_cli.adapters.console.printer import print_error
+from tts_cli.core.errors import RetryExhaustedError
 
 
 def error_hint(exc: Exception) -> str | None:
+    if isinstance(exc, RetryExhaustedError):
+        return error_hint(exc.cause)
     if isinstance(exc, FileNotFoundError):
         return "kiểm tra lại đường dẫn file hoặc thư mục input."
     if isinstance(exc, IsADirectoryError):

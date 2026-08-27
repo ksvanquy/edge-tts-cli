@@ -16,7 +16,5 @@ def format_duration(microseconds: int) -> str:
 def cues_to_srt(cues: list[SubtitleCue]) -> str:
     blocks = []
     for index, cue in enumerate(cues, start=1):
-        blocks.append(
-            f"{index}\n{format_srt_time(cue.start)} --> {format_srt_time(cue.end)}\n{cue.text.strip()}"
-        )
+        blocks.append(f"{index}\n{format_srt_time(cue.start)} --> {format_srt_time(cue.end)}\n{cue.text.strip()}")
     return "\n\n".join(blocks) + ("\n" if blocks else "")

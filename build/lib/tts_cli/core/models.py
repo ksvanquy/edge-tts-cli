@@ -15,6 +15,14 @@ class TTSConfig:
 
 
 @dataclass
+class TranscribeConfig:
+    model_size: str = "base"
+    language: str | None = None
+    device: str = "auto"
+    compute_type: str = "auto"
+
+
+@dataclass
 class SubtitleCue:
     start: int
     end: int
@@ -33,6 +41,14 @@ class TranscriptResult:
     cues: list[SubtitleCue]
     language: str | None = None
     metadata: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class OutputContext:
+    folder: Path
+    word_cues: list[SubtitleCue]
+    subtitle_cues: list[SubtitleCue]
+    audio_path: Path
 
 
 @dataclass(frozen=True)

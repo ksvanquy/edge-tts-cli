@@ -17,6 +17,8 @@ htmlcov/
 
 # Project specific outputs (thư mục chứa file audio/subtitle xuất ra)
 output/
+build/
+dist/
 
 # IDE / Editor settings
 .vscode/

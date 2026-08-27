@@ -1,6 +1,6 @@
 from tts_cli.core.models import SubtitleCue
-from tts_cli.subtitle.cues import build_subtitle_cues, make_phrase_cues, make_sentence_cues
-from tts_cli.subtitle.srt import cues_to_srt, format_srt_time
+from tts_cli.adapters.subtitle.cues import build_subtitle_cues, make_phrase_cues, make_sentence_cues
+from tts_cli.adapters.subtitle.srt import cues_to_srt, format_srt_time
 
 
 def test_format_srt_time():

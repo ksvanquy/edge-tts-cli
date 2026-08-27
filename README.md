@@ -31,7 +31,7 @@ Shortcut này chỉ áp dụng cho `generate`. Các lệnh `batch` và `voices` 
 
 The `generate` command accepts UTF-8 `TXT`, `SRT`, and `VTT` files. For subtitle files, cue numbers, timestamps, and WebVTT metadata are removed before the text is sent to Edge TTS. By default, each project contains `audio.mp3` and `subtitle.srt`. Use `--formats` with a comma-separated list of `mp3`, `srt`, `vtt`, and `json` to choose the output artifacts. The subtitle formats are written as `subtitle.srt`, `subtitle.vtt`, and `subtitle.json`.
 
-Output handling is separated into an Output Module. `OutputResolver` dispatches each selected format to its own handler and manages the artifact paths in the numbered project folder. If synthesis or output writing fails, incomplete artifacts from the current run are cleaned up automatically.
+Output handling is separated into an output adapter. `OutputResolver` dispatches each selected format to its own handler and manages the artifact paths in the numbered project folder. If synthesis or output writing fails, incomplete artifacts from the current run are cleaned up automatically.
 
 Batch mode scans `.txt`, `.srt`, and `.vtt` files, then maps them in sorted order to folders beginning at `--start`. Existing folders are overwritten by default, so rerunning the same batch updates `001`, `002`, and so on instead of creating new projects. Use `--skip-existing` to leave complete projects unchanged according to the selected `--formats`.
 
@@ -58,24 +58,44 @@ python -m tts_cli generate -f scripts\script1.txt --voice vi-VN-NamMinhNeural
 
 ## Architecture
 
-The project uses a layered `src` layout:
+The project uses a layered `src` layout with one-way dependencies:
 
 ```text
 CLI
 	-> application use cases
-		-> input readers and resolver
-		-> providers/tts (Edge, Google)
-		-> providers/stt (Whisper, Google, ...)
-		-> providers/media (FFmpeg)
-		-> subtitle and output handlers
+			-> services
+			-> core contracts and models
+	-> providers and adapters (composition root)
+
+services
+	-> core
+
+providers
+	-> core
+
+adapters
+	-> core
 ```
 
-`core` defines the provider boundaries and domain models. `application` contains
-the `SynthesizeUseCase`, `BatchProcessUseCase`, and `TranscribeUseCase` workflows.
-`providers` contains integrations for TTS, speech-to-text, and media processing.
-`input` owns text normalization and TXT/SRT/VTT readers. `subtitle` and `output`
-remain provider-independent and are responsible for cue processing and artifact
-writing.
+The canonical package structure is:
+
+```text
+src/tts_cli/
+├── core/         Domain models, provider interfaces, config, errors, capabilities
+├── application/  Synthesize, batch, transcribe, and voice-listing use cases
+├── services/     Retry, project lifecycle, batch discovery, transcription, voice catalog
+├── providers/    Edge/Google TTS, Whisper STT, and FFmpeg integrations
+├── adapters/     Input, output, subtitle, and console I/O implementations
+└── cli/          Argument parser and composition root
+```
+
+`core` contains framework-independent contracts and domain models. `application`
+coordinates user workflows. `services` contains reusable policies and orchestration
+such as retries, project numbering, batch file discovery, media transcription, and
+voice filtering. `providers` owns external SDK and system integrations, while
+`adapters` owns filesystem, subtitle, output-format, and console I/O. The CLI wires
+these components together without making the application layer depend on a specific
+provider implementation.
 
 ## TTS Parameters
 
@@ -104,7 +124,7 @@ Available parameters:
 
 | Option | Description | Example |
 | --- | --- | --- |
-| `-v`, `--voice` | Edge TTS voice `ShortName` | `vi-VN-NamMinhNeural` |
+| `-v`, `--voice` | Voice name for the selected TTS engine | `vi-VN-NamMinhNeural` |
 | `--rate` | Reading speed adjustment | `+10%`, `-10%` |
 | `--pitch` | Voice pitch adjustment | `+2Hz`, `-2Hz` |
 | `--volume` | Output volume adjustment | `+0%`, `-10%` |
@@ -160,7 +180,46 @@ vì vậy subtitle timing có thể rỗng. Edge TTS vẫn là engine mặc đ�
 
 ### Audio/video to SRT
 
-Cài Whisper local và đảm bảo `ffmpeg` có trong `PATH`:
+Workflow Whisper cần hai thành phần riêng:
+
+1. Package Python `faster-whisper` trong môi trường ảo.
+2. Hai executable hệ thống `ffmpeg.exe` và `ffprobe.exe` trong `PATH`.
+
+#### Cài FFmpeg trên Windows
+
+Cách nhanh nhất là dùng `winget`:
+
+```powershell
+winget install Gyan.FFmpeg.Shared
+```
+
+Đóng và mở lại PowerShell sau khi cài. Nếu máy không có `winget`, tải bản Windows
+Essentials từ [FFmpeg Builds by gyan.dev](https://www.gyan.dev/ffmpeg/builds/),
+giải nén, ví dụ vào `C:\ffmpeg`, rồi thêm thư mục `C:\ffmpeg\bin` vào **User
+Path** hoặc **System Path** trong `System Properties > Environment Variables`.
+
+Có thể thêm tạm vào PATH của phiên PowerShell hiện tại để kiểm tra:
+
+```powershell
+$env:Path += ";C:\ffmpeg\bin"
+```
+
+Kiểm tra cả hai executable:
+
+```powershell
+Get-Command ffmpeg
+Get-Command ffprobe
+ffmpeg -version
+ffprobe -version
+```
+
+Nếu `Get-Command` không tìm thấy lệnh, hãy mở một terminal mới sau khi cập nhật
+PATH. Dự án gọi trực tiếp cả `ffmpeg` và `ffprobe`, nên chỉ cài một trong hai
+không đủ.
+
+#### Cài Whisper cho project
+
+Cài Whisper local và đảm bảo `ffmpeg`/`ffprobe` đã được kiểm tra ở bước trên:
 
 ```powershell
 python -m pip install -e ".[whisper]"
@@ -170,6 +229,7 @@ Transcribe file audio trực tiếp hoặc video thông qua audio track:
 
 ```powershell
 python -m tts_cli transcribe audio.wav --engine whisper --output subtitle.srt
+python -m tts_cli transcribe audio.mp3 --engine whisper --output subtitle.srt
 python -m tts_cli transcribe video.mp4 --engine whisper --language vi --model-size small
 ```
 

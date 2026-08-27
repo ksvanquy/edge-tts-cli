@@ -2,10 +2,13 @@ from collections.abc import Callable
 from typing import Any
 
 from tts_cli.core.interfaces import SpeechTranscriber
+from tts_cli.providers.stt.whisper import WhisperTranscriber
 
 
 class STTProviderFactory:
-    _providers: dict[str, Callable[[Any], SpeechTranscriber]] = {}
+    _providers: dict[str, Callable[[Any], SpeechTranscriber]] = {
+        "whisper": WhisperTranscriber,
+    }
 
     @classmethod
     def register(cls, name: str, provider: Callable[[Any], SpeechTranscriber]) -> None:

@@ -4,7 +4,6 @@ from typing import Any
 from tts_cli.core.interfaces import TTSEngine
 from tts_cli.providers.tts.google import GoogleTTSEngine
 from tts_cli.providers.tts.edge import EdgeTTSEngine
-from tts_cli.providers.tts.edge import EdgeTTSEngine
 
 
 class TTSProviderFactory:

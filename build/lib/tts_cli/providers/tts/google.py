@@ -4,16 +4,18 @@ import asyncio
 import re
 from pathlib import Path
 
-from tts_cli.core.models import SubtitleCue, TTSConfig
+from tts_cli.core.models import ProviderCapabilities, SynthesisResult, TTSConfig
 
 
 class GoogleTTSEngine:
     """Synthesize MP3 through Google Cloud TTS."""
 
+    capabilities = ProviderCapabilities(voice_listing=True)
+
     def __init__(self, config: TTSConfig):
         self.config = config
 
-    async def synthesize(self, text: str, audio_path: Path) -> list[SubtitleCue]:
+    async def synthesize(self, text: str, audio_path: Path) -> SynthesisResult:
         try:
             from google.cloud import texttospeech
         except ImportError as exc:
@@ -22,7 +24,7 @@ class GoogleTTSEngine:
             ) from exc
 
         await asyncio.to_thread(self._synthesize, text, audio_path, texttospeech)
-        return []
+        return SynthesisResult(audio_path, [], {"provider": "google", "word_timing": False})
 
     def _synthesize(self, text: str, audio_path: Path, texttospeech) -> None:
         client = texttospeech.TextToSpeechClient()

@@ -2,7 +2,9 @@ import asyncio
 from pathlib import Path
 
 from tts_cli.application.transcribe import TranscribeUseCase
+from tts_cli.adapters.subtitle.srt import cues_to_srt
 from tts_cli.core.models import SubtitleCue, TranscriptResult
+from tts_cli.services.transcription import TranscriptionService
 
 
 class FakeTranscriber:
@@ -26,7 +28,8 @@ def test_transcribe_extracts_video_audio_and_writes_srt(tmp_path: Path):
     source.write_bytes(b"video")
     output = tmp_path / "subtitle.srt"
 
-    result = asyncio.run(TranscribeUseCase(FakeTranscriber(), FakeMedia()).execute(source, output))
+    transcription = TranscriptionService(FakeTranscriber(), FakeMedia())
+    result = asyncio.run(TranscribeUseCase(transcription, cues_to_srt).execute(source, output))
 
     assert result.language == "en-US"
     assert output.read_text(encoding="utf-8") == "1\n00:00:00,000 --> 00:00:00,001\nHello\n"

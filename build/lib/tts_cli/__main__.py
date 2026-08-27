@@ -3,7 +3,7 @@ import sys
 
 from tts_cli.cli.commands import async_main, normalize_argv
 from tts_cli.cli.parser import build_parser
-from tts_cli.console.printer import print_error
+from tts_cli.adapters.console.printer import print_error
 
 
 def error_hint(exc: Exception) -> str | None:

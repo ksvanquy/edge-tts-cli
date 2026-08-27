@@ -44,6 +44,14 @@ class TranscriptResult:
 
 
 @dataclass(frozen=True)
+class OutputContext:
+    folder: Path
+    word_cues: list[SubtitleCue]
+    subtitle_cues: list[SubtitleCue]
+    audio_path: Path
+
+
+@dataclass(frozen=True)
 class ProviderCapabilities:
     word_timing: bool = False
     sentence_timing: bool = False

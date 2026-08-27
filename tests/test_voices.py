@@ -1,7 +1,7 @@
 import asyncio
 from unittest.mock import AsyncMock
 
-from tts_cli.services.voices import list_voices
+from tts_cli.services.voice_catalog import VoiceCatalogService
 
 
 def test_list_voices_filters_and_sorts_results(monkeypatch, capsys):
@@ -26,23 +26,16 @@ def test_list_voices_filters_and_sorts_results(monkeypatch, capsys):
         },
     ]
     mocked_list_voices = AsyncMock(return_value=voices)
-    monkeypatch.setattr("tts_cli.services.voices.edge_tts.list_voices", mocked_list_voices)
 
-    asyncio.run(list_voices(language="vi", gender="Female"))
+    result = asyncio.run(VoiceCatalogService(mocked_list_voices).find(language="vi", gender="Female"))
 
-    output = capsys.readouterr().out
-    assert "vi-VN-HoaiMyNeural" in output
-    assert "vi-VN-NamMinhNeural" not in output
-    assert "Tổng: 1 voice" in output
+    assert [voice["ShortName"] for voice in result] == ["vi-VN-HoaiMyNeural"]
     mocked_list_voices.assert_awaited_once()
 
 
 def test_list_voices_reports_no_match(monkeypatch, capsys):
-    monkeypatch.setattr(
-        "tts_cli.services.voices.edge_tts.list_voices",
-        AsyncMock(return_value=[]),
-    )
+    loader = AsyncMock(return_value=[])
 
-    asyncio.run(list_voices(search="missing"))
+    result = asyncio.run(VoiceCatalogService(loader).find(search="missing"))
 
-    assert "Không tìm thấy voice." in capsys.readouterr().out
+    assert result == []

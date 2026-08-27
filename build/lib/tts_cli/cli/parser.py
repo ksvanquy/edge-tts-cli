@@ -62,4 +62,11 @@ def build_parser() -> argparse.ArgumentParser:
     voices.add_argument("--gender", choices=["Male", "Female"])
     voices.add_argument("--search")
     voices.add_argument("--engine", choices=["edge", "google"], default="edge")
+    transcribe = subparsers.add_parser("transcribe", help="Chuyển audio/video thành SRT")
+    transcribe.add_argument("source", help="Đường dẫn file audio hoặc video")
+    transcribe.add_argument("-o", "--output", default="subtitle.srt")
+    transcribe.add_argument("--engine", choices=["whisper"], default="whisper")
+    transcribe.add_argument("--model-size", choices=["tiny", "base", "small", "medium", "large-v3"], default="base")
+    transcribe.add_argument("--language", default=None)
+    transcribe.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     return parser

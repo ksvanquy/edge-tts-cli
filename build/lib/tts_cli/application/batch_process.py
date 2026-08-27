@@ -1,25 +1,26 @@
 from pathlib import Path
+from collections.abc import Callable
 
 from tts_cli.application.synthesize import SynthesizeUseCase
-from tts_cli.console.progress import ProgressBar
-from tts_cli.input.resolver import InputResolver
-from tts_cli.output.resolver import OutputResolver
-
-
-def find_input_files(directory: Path, recursive: bool) -> list[Path]:
-    iterator = directory.rglob("*") if recursive else directory.glob("*")
-    extensions = {".txt", ".srt", ".vtt"}
-    return sorted(
-        (path for path in iterator if path.is_file() and path.suffix.lower() in extensions),
-        key=lambda path: str(path).lower(),
-    )
+from tts_cli.core.interfaces import BatchFilesPort, InputPort, OutputPort, ProgressPort
 
 
 class BatchProcessUseCase:
     """Discover input files and orchestrate batch synthesis."""
 
-    def __init__(self, synthesis: SynthesizeUseCase):
+    def __init__(
+        self,
+        synthesis: SynthesizeUseCase,
+        files: BatchFilesPort,
+        inputs: InputPort,
+        output: OutputPort,
+        progress_factory: Callable[[int, str], ProgressPort],
+    ):
         self.synthesis = synthesis
+        self.files = files
+        self.inputs = inputs
+        self.output = output
+        self.progress_factory = progress_factory
 
     async def execute(
         self, source: Path, output_root: Path, recursive: bool, subtitle_mode: str,
@@ -30,21 +31,19 @@ class BatchProcessUseCase:
             raise FileNotFoundError(f"Không tìm thấy thư mục: {source}")
         if not source.is_dir():
             raise ValueError(f"Không phải thư mục: {source}")
-        files = find_input_files(source, recursive)
+        files = self.files.discover(source, recursive)
         if not files:
             print("⚠️ Không tìm thấy file .txt, .srt hoặc .vtt.")
             return
 
         success = failed = skipped = 0
-        output_resolver = OutputResolver()
-        input_resolver = InputResolver()
-        required_files = output_resolver.required_files(formats)
-        progress = ProgressBar(len(files), "Batch")
+        required_files = self.output.required_files(formats)
+        progress = self.progress_factory(len(files), "Batch")
         for index, file_path in enumerate(files):
             project_number = start + index
             progress.update(index, file_path.name)
             try:
-                text = input_resolver.resolve_file(file_path).text
+                text = self.inputs.resolve_file(file_path).text
                 folder = output_root / f"{project_number:03d}"
                 complete = all((folder / name).exists() for name in required_files)
                 if skip_existing and complete:
@@ -69,4 +68,4 @@ class BatchProcessUseCase:
         print(f"✅ Success: {success} | ⏭️ Skipped: {skipped} | ❌ Failed: {failed}")
 
 
-__all__ = ["BatchProcessUseCase", "find_input_files"]
+__all__ = ["BatchProcessUseCase"]

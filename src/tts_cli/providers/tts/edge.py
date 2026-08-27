@@ -4,7 +4,7 @@ from pathlib import Path
 
 import edge_tts
 
-from tts_cli.console.printer import print_warning
+from tts_cli.adapters.console.printer import print_warning
 from tts_cli.core.models import ProviderCapabilities, SynthesisResult, SubtitleCue, TTSConfig
 
 

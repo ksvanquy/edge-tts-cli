@@ -1,9 +1,9 @@
 import json
 
 from tts_cli.core.models import SubtitleCue
-from tts_cli.output.formats import OutputContext
-from tts_cli.output.project import create_output_folder, get_next_number
-from tts_cli.output.resolver import OutputResolver
+from tts_cli.adapters.output.formats import OutputContext
+from tts_cli.adapters.output.resolver import OutputResolver
+from tts_cli.services.project import create_output_folder, get_next_number
 
 
 def test_next_number_and_folder_format(tmp_path):
