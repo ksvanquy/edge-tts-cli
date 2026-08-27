@@ -11,7 +11,8 @@ class RetryExhaustedError(TTSCLIError, RuntimeError):
 	def __init__(self, attempts: int, cause: Exception):
 		self.attempts = attempts
 		self.cause = cause
-		super().__init__(f"Operation thất bại sau {attempts} lần thử: {cause}")
+		cause_message = str(cause) or cause.__class__.__name__
+		super().__init__(f"Operation thất bại sau {attempts} lần thử: {cause_message}")
 
 
 __all__ = ["RetryExhaustedError", "TTSCLIError"]

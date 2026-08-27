@@ -8,3 +8,8 @@ Provides-Extra: google
 Requires-Dist: google-cloud-texttospeech>=2.16.0; extra == "google"
 Provides-Extra: whisper
 Requires-Dist: faster-whisper>=1.0.0; extra == "whisper"
+Provides-Extra: ui
+Requires-Dist: nicegui>=2.0.0; extra == "ui"
+Provides-Extra: desktop
+Requires-Dist: nicegui>=2.0.0; extra == "desktop"
+Requires-Dist: pywebview>=5.0.0; extra == "desktop"

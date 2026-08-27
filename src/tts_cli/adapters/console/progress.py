@@ -11,14 +11,7 @@ class ProgressBar:
     def update(self, current: int, detail: str = "") -> None:
         self.current = min(max(current, 0), self.total)
         percent = self.current * 100 // self.total
-        if self.enabled:
-            width = 24
-            filled = width * self.current // self.total
-            bar = "=" * filled + ">" + " " * max(width - filled - 1, 0)
-            print(f"\r{self.label} [{bar}] {percent:3d}% {detail}"[:120], end="", file=sys.stderr, flush=True)
-        else:
-            print(f"{self.label}: {self.current}/{self.total} {detail}".rstrip(), file=sys.stderr)
+        print(f"[{percent:3d}%] {self.label}: {detail}".rstrip(), file=sys.stderr, flush=not self.enabled)
 
     def finish(self) -> None:
-        if self.enabled:
-            print(file=sys.stderr)
+        return None

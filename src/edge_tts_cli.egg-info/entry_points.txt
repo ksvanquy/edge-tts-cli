@@ -1,2 +1,4 @@
 [console_scripts]
 tts = tts_cli.__main__:main
+tts-desktop = tts_cli.ui.desktop:main
+tts-ui = tts_cli.ui.app:main

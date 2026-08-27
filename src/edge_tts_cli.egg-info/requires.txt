@@ -1,7 +1,14 @@
 edge-tts>=6.1.0
 
+[desktop]
+nicegui>=2.0.0
+pywebview>=5.0.0
+
 [google]
 google-cloud-texttospeech>=2.16.0
+
+[ui]
+nicegui>=2.0.0
 
 [whisper]
 faster-whisper>=1.0.0

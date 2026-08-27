@@ -1,9 +1,10 @@
 # Edge TTS CLI
 
-Convert text files or direct text to numbered folders containing configurable output artifacts.
+### UI desktop Windows
+UI desktop PySide6 được cung cấp dưới dạng dependency tùy chọn và dùng lại các
 
-## Usage
-
+python -m pip install -e ".[desktop]"
+tts-desktop
 ```powershell
 python -m tts_cli generate -f scripts\script1.txt
 python -m tts_cli generate -f scripts\script3.srt
@@ -11,24 +12,15 @@ python -m tts_cli generate -f scripts\script4.vtt
 python -m tts_cli generate -f scripts\script3.srt --formats mp3,srt,vtt,json
 python -m tts_cli generate -f scripts\script1.txt --voice vi-VN-NamMinhNeural --rate +0% --pitch +0Hz --volume +0%
 
-python -m tts_cli batch scripts
+Ứng dụng mở trực tiếp trong cửa sổ Windows, không cần browser hoặc web server.
+UI có các mode Generate, Batch, Transcribe và Voices; provider Google/Whisper
+vẫn cần cài extra tương ứng. UI không gọi trực tiếp SDK, FFmpeg hoặc filesystem
+output ngoài các use case/adapter đã được wire ở composition root.
 python -m tts_cli batch scripts --recursive
-python -m tts_cli batch scripts --formats mp3,srt,json
-python -m tts_cli batch scripts --voice vi-VN-NamMinhNeural --rate +0% --pitch +0Hz --volume +0%
-python -m tts_cli voices --language vi
-python -m tts_cli transcribe scripts\audio.wav --engine whisper --output subtitle.srt
-python -m tts_cli transcribe videos\input.mp4 --engine whisper --language vi --output subtitle.srt
-```
-
-`generate` là subcommand tường minh. Khi chỉ tạo một project từ text hoặc file, có thể bỏ qua `generate`; CLI sẽ tự nhận diện lệnh này:
-
-```powershell
-python -m tts_cli -f scripts\script1.txt --voice vi-VN-NamMinhNeural --rate +0% --pitch +0Hz --volume +0%
-python -m tts_cli -t "Xin chào" --voice vi-VN-NamMinhNeural
 ```
 
 Shortcut này chỉ áp dụng cho `generate`. Các lệnh `batch` và `voices` vẫn cần ghi rõ tên subcommand.
-
+`tts-ui` vẫn là alias tương thích tới cùng PySide6 application:
 The `generate` command accepts UTF-8 `TXT`, `SRT`, and `VTT` files. For subtitle files, cue numbers, timestamps, and WebVTT metadata are removed before the text is sent to Edge TTS. By default, each project contains `audio.mp3` and `subtitle.srt`. Use `--formats` with a comma-separated list of `mp3`, `srt`, `vtt`, and `json` to choose the output artifacts. The subtitle formats are written as `subtitle.srt`, `subtitle.vtt`, and `subtitle.json`.
 
 Output handling is separated into an output adapter. `OutputResolver` dispatches each selected format to its own handler and manages the artifact paths in the numbered project folder. If synthesis or output writing fails, incomplete artifacts from the current run are cleaned up automatically.
@@ -141,6 +133,30 @@ py -3 -m venv venv
 .\venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e .
+```
+
+### UI web
+
+UI desktop PySide6 được cung cấp dưới dạng dependency tùy chọn và dùng lại các
+application use case hiện có:
+
+```powershell
+python -m pip install -e ".[desktop]"
+tts-desktop
+```
+
+Ứng dụng mở trực tiếp trong cửa sổ Windows, không cần browser hoặc web server.
+UI có các mode Generate, Batch, Transcribe và Voices; provider Google/Whisper
+vẫn cần cài extra tương ứng. UI không gọi trực tiếp SDK, FFmpeg hoặc filesystem
+output ngoài các use case/adapter đã được wire ở composition root.
+
+### UI desktop Windows
+
+`tts-ui` là alias tương thích tới cùng PySide6 application. Trong môi trường
+phát triển, có thể chạy trực tiếp:
+
+```powershell
+python -m tts_cli.ui.desktop
 ```
 
 ### Google Cloud Text-to-Speech
@@ -257,3 +273,12 @@ python -m pytest tests\test_output.py tests\test_cli.py tests\test_commands.py t
 ```
 
 The tests mock Edge TTS network calls, so the test suite runs offline. The current suite covers input normalization, TXT/SRT/VTT parsing, subtitle cue generation, validation, output handlers, CLI parsing, retry behavior, batch processing, progress, and voice filtering.
+
+python -m pip install -e ".[desktop]"
+tts-desktop
+python -m tts_cli.ui.desktop
+
+venv\Scripts\python.exe -m tts_cli.ui.desktop
+tts-desktop
+venv\Scripts\python.exe -m build
+venv\Scripts\python.exe -m pip install --force-reinstall dist\*.whl

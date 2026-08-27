@@ -197,7 +197,7 @@ def test_progress_bar_clamps_values_and_finishes(capsys):
     progress.update(5, "done")
     progress.finish()
 
-    assert "Test: 2/2 done" in capsys.readouterr().err
+    assert "[100%] Test: done" in capsys.readouterr().err
 
 
 def test_find_input_files_returns_supported_files_in_sorted_order(tmp_path: Path):

@@ -4,6 +4,8 @@ from pathlib import Path
 
 from tts_cli.core.interfaces import OutputPort, ProgressPort, ProjectPort, RetryPort, TTSEngine
 from tts_cli.core.models import OutputContext, SubtitleCue, SynthesisResult, TTSConfig
+from tts_cli.application.bus import EventBus
+from tts_cli.core.events import ApplicationNotice
 
 
 class SynthesizeUseCase:
@@ -20,6 +22,8 @@ class SynthesizeUseCase:
         subtitle_builder: Callable[[list[SubtitleCue], str, int], list[SubtitleCue]],
         format_duration: Callable[[int], str],
         progress_factory: Callable[[int, str], ProgressPort],
+        event_bus: EventBus | None = None,
+        operation_id: str | None = None,
     ):
         self.engine = engine
         self.config = config
@@ -30,6 +34,14 @@ class SynthesizeUseCase:
         self.subtitle_builder = subtitle_builder
         self.format_duration = format_duration
         self.progress_factory = progress_factory
+        self.event_bus = event_bus
+        self.operation_id = operation_id
+
+    def _notify(self, level: str, message: str) -> None:
+        if self.event_bus is not None:
+            self.event_bus.publish(ApplicationNotice(self.operation_id, level, message))
+        else:
+            print(message)
 
     async def synthesize_with_retry(self, text: str, audio_path: Path) -> SynthesisResult:
         async def operation() -> SynthesisResult:
@@ -39,14 +51,6 @@ class SynthesizeUseCase:
             return result
 
         return await self.retry.execute(operation, self.config.retries, self.config.timeout, audio_path)
-
-    @staticmethod
-    async def _animate_tts_progress(progress: ProgressPort) -> None:
-        current = 1
-        while current <= 70:
-            progress.update(current, "TTS")
-            current += 1
-            await asyncio.sleep(0.08)
 
     async def execute(
         self, text: str, output_root: Path, subtitle_mode: str, max_words: int,
@@ -61,41 +65,39 @@ class SynthesizeUseCase:
         project = self.projects.paths(output_root, start, project_number)
         number, folder, audio_path = project.number, project.folder, project.audio
         if dry_run:
-            print(f"  → {folder}/")
+            self._notify("info", f"  → {folder}/")
             for index, handler in enumerate(handlers):
                 branch = "└──" if index == len(handlers) - 1 else "├──"
-                print(f"     {branch} {self.output.filename(handler)}")
+                self._notify("info", f"     {branch} {self.output.filename(handler)}")
             return number
         if folder.exists() and not overwrite:
             raise FileExistsError(f"Folder output đã tồn tại: {folder}")
         folder_created = not folder.exists()
         folder.mkdir(parents=True, exist_ok=True)
         progress = self.progress_factory(100, "Generate")
+        self._notify("debug", f"Bắt đầu project {number:03d}: {len(text)} ký tự")
         progress.update(0, "TTS")
         try:
-            progress_task = asyncio.create_task(self._animate_tts_progress(progress)) if progress.enabled else None
-            try:
-                synthesis_result = await self.synthesize_with_retry(text, audio_path)
-            finally:
-                if progress_task is not None:
-                    progress_task.cancel()
-                    try:
-                        await progress_task
-                    except asyncio.CancelledError:
-                        pass
+            synthesis_result = await self.synthesize_with_retry(text, audio_path)
+            self._notify("debug", f"TTS trả về {len(synthesis_result.word_cues)} word cues")
+            progress.update(70, "TTS hoàn tất")
             word_cues = synthesis_result.word_cues
-            progress.update(75, "subtitle")
+            progress.update(80, "subtitle")
             subtitle_cues = self.subtitle_builder(word_cues, subtitle_mode, max_words)
-            progress.update(90, "output")
+            self._notify("debug", f"Đã dựng {len(subtitle_cues)} subtitle cues")
+            progress.update(95, "output")
             self.output.write(OutputContext(folder, word_cues, subtitle_cues, audio_path), formats)
+            self._notify("debug", f"Đã ghi output: {folder}")
             progress.update(100, "hoàn tất")
-        except Exception:
+        except Exception as error:
+            if self.event_bus is not None and self.operation_id is not None:
+                self._notify("error", f"Project {number:03d} thất bại: {error}")
             self.output.cleanup(folder, formats, remove_folder=folder_created)
             raise
         finally:
             progress.finish()
         duration = self.format_duration(word_cues[-1].end) if word_cues else "0.00s"
-        print(f"✅ PROJECT {number:03d}: {len(word_cues)} từ, {len(subtitle_cues)} cues, {duration}")
+        self._notify("info", f"✅ PROJECT {number:03d}: {len(word_cues)} từ, {len(subtitle_cues)} cues, {duration}")
         return number
 
 
