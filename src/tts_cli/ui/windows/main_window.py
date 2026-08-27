@@ -345,8 +345,10 @@ class MainWindow(QMainWindow):
         if bool(text) == bool(input_file):
             QMessageBox.warning(self, "Input", "Hãy chọn đúng một nguồn.")
             return
-        values["text"] = text
-        input_text = text
+        input_args = SimpleNamespace(text=text or None, file=input_file or None)
+        resolved_text = InputResolver().resolve(input_args).text
+        values["text"] = resolved_text if not input_file else ""
+        input_text = resolved_text
         voice = str(values["voice"])
         rate = str(values["rate"])
         pitch = str(values["pitch"])
@@ -359,12 +361,11 @@ class MainWindow(QMainWindow):
         subtitle_mode = str(values["subtitle_mode"])
         max_words = int(values["max_words"])
         formats = str(values["formats"])
+        operation_id = self.operation_id
 
         async def operation() -> int:
-            args = SimpleNamespace(text=input_text or None, file=input_file or None)
             config = TTSConfig(voice.strip(), rate, pitch, volume, retries, timeout, proxy)
-            resolved_text = InputResolver().resolve(args).text
-            return await create_synthesis(config, engine, event_bus=self.event_bus, operation_id=self.operation_id).execute(resolved_text, output, subtitle_mode, max_words, formats=formats)
+            return await create_synthesis(config, engine, event_bus=self.event_bus, operation_id=operation_id).execute(input_text, output, subtitle_mode, max_words, formats=formats)
         self._start(operation)
 
     def _run_batch(self) -> None:

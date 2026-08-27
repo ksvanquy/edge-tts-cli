@@ -136,18 +136,27 @@ python -m pip install -e .
 
 ### Build ứng dụng Windows
 
-UI PySide6 được cung cấp dưới dạng dependency tùy chọn. Để tạo file thực thi
-Windows bằng PyInstaller:
+UI PySide6 được cung cấp dưới dạng dependency tùy chọn. Có thể build riêng UI
+và CLI bằng Python trong `venv` để hai file dùng cùng runtime:
 
 ```powershell
-python -m pip install -e ".[desktop,build]"
-python -m PyInstaller --clean --noconfirm edge-tts-ui.spec
+venv\Scripts\python.exe -m pip install -e ".[desktop,build]"
+venv\Scripts\python.exe -m PyInstaller --clean --noconfirm edge-tts-ui.spec
+venv\Scripts\python.exe -m PyInstaller --clean --noconfirm edge-tts-cli.spec
 ```
 
 File thực thi được tạo tại `dist\edge-tts-ui.exe`. Có thể chạy trực
 tiếp file này trên Windows; ứng dụng mở trong cửa sổ, không cần browser hoặc web
 server. Provider Google/Whisper vẫn cần cài extra tương ứng trước khi build nếu
 muốn sử dụng các mode đó.
+
+CLI được tạo tại `dist\edge-tts-cli.exe` và chạy trong cửa sổ console:
+
+```powershell
+dist\edge-tts-cli.exe generate -f scripts\script1.txt
+dist\edge-tts-cli.exe batch scripts --recursive
+dist\edge-tts-cli.exe voices
+```
 
 ### UI desktop Windows trong môi trường phát triển
 
