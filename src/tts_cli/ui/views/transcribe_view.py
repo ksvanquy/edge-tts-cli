@@ -16,7 +16,7 @@ class TranscribeView(QWidget):
         layout.addWidget(heading)
         layout.addWidget(QLabel("Tạo file SRT từ audio hoặc video bằng Whisper local."))
         
-        self.media_path = QLineEdit()
+        self.media_path = QLineEdit(str(self.main_window.state.transcribe_values["source"]))
         self.media_path.setPlaceholderText("File audio/video")
         self.main_window.media_path = self.media_path
         self.main_window.operation_controls.append(self.media_path)
@@ -30,7 +30,13 @@ class TranscribeView(QWidget):
         row.addWidget(choose)
         layout.addLayout(row)
         
-        self.transcribe_output = QLineEdit("subtitle.srt")
+        self.transcribe_output = QLineEdit(str(self.main_window.state.transcribe_values["output"]))
+        self.transcribe_output.textChanged.connect(
+            lambda value: (
+                self.main_window.state.transcribe_values.__setitem__("output", value),
+                self.main_window.state.save_to_file(),
+            )
+        )
         self.main_window.transcribe_output = self.transcribe_output
         self.main_window.operation_controls.append(self.transcribe_output)
         layout.addWidget(self.transcribe_output)
@@ -46,3 +52,4 @@ class TranscribeView(QWidget):
         if path:
             self.media_path.setText(path)
             self.main_window.state.transcribe_values["source"] = path
+            self.main_window.state.save_to_file()

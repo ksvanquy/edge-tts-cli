@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
+import sys
 from typing import Any, Literal
 
 from tts_cli.cli.constants import DEFAULT_MAX_WORDS, DEFAULT_OUTPUT, DEFAULT_SUBTITLE_MODE
@@ -42,7 +43,13 @@ class AppState:
         "engine": "edge", "language": "", "gender": "", "search": "",
     })
 
-    def save_to_file(self, filepath: str | Path = "config.json") -> None:
+    @staticmethod
+    def default_filepath() -> Path:
+        if getattr(sys, "frozen", False):
+            return Path(sys.executable).resolve().parent / "config.json"
+        return Path(__file__).resolve().parents[3] / "config.json"
+
+    def save_to_file(self, filepath: str | Path | None = None) -> None:
         """Lưu toàn bộ state cấu hình hiện tại ra file JSON."""
         try:
             data = {
@@ -51,15 +58,16 @@ class AppState:
                 "transcribe_values": self.transcribe_values,
                 "voices_values": self.voices_values,
             }
-            Path(filepath).write_text(json.dumps(data, ensure_ascii=False, indent=4), encoding="utf-8")
+            path = Path(filepath) if filepath is not None else self.default_filepath()
+            path.write_text(json.dumps(data, ensure_ascii=False, indent=4), encoding="utf-8")
         except Exception as e:
             print(f"Không thể lưu state: {e}")
 
     @classmethod
-    def load_from_file(cls, filepath: str | Path = "config.json") -> "AppState":
+    def load_from_file(cls, filepath: str | Path | None = None) -> "AppState":
         """Khởi tạo AppState và nạp dữ liệu cũ từ file JSON nếu có."""
         instance = cls()
-        path = Path(filepath)
+        path = Path(filepath) if filepath is not None else cls.default_filepath()
         if path.exists():
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))

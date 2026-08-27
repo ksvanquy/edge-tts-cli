@@ -17,7 +17,7 @@ class GenerateView(QWidget):
         layout.addWidget(heading)
         layout.addWidget(QLabel("Nhập văn bản hoặc chọn một file TXT, SRT, VTT."))
         
-        self.text_editor = QPlainTextEdit()
+        self.text_editor = QPlainTextEdit(str(self.main_window.state.generate_values["text"]))
         self.text_editor.setPlaceholderText("Text trực tiếp")
         self.text_editor.setMinimumHeight(300)
         self.text_editor.textChanged.connect(self._on_text_changed)
@@ -41,9 +41,12 @@ class GenerateView(QWidget):
 
     def _on_text_changed(self) -> None:
         # Khi người dùng gõ text trực tiếp, tự động xóa file đã chọn trước đó
-        if self.text_editor.toPlainText().strip():
+        text = self.text_editor.toPlainText()
+        self.main_window.state.generate_values["text"] = text
+        if text.strip():
             self.main_window.state.generate_values["file"] = ""
             self.file_label.setText("Chưa chọn file")
+        self.main_window.state.save_to_file()
 
     def _choose_input_file(self) -> None:
         path, _ = QFileDialog.getOpenFileName(self, "Chọn input", "", "Text/subtitle (*.txt *.srt *.vtt)")
@@ -54,3 +57,4 @@ class GenerateView(QWidget):
             self.text_editor.clear()
             self.text_editor.blockSignals(False)
             self.file_label.setText(Path(path).name)
+            self.main_window.state.save_to_file()

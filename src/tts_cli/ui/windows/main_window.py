@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from tts_cli.adapters.input.media import is_audio_file, is_video_file
+from tts_cli.adapters.input.processor import normalize_text
 from tts_cli.adapters.input.resolver import InputResolver
 from tts_cli.adapters.subtitle.srt import cues_to_srt
 from tts_cli.application.batch_process import BatchProcessUseCase
@@ -184,7 +185,10 @@ class MainWindow(QMainWindow):
         for label, control, key in [("Model size", model, "model_size"), ("Device", device, "device"), ("Language", language, "language")]:
             tc_form.addRow(label, control)
             signal = control.currentTextChanged if isinstance(control, QComboBox) else control.textChanged
-            signal.connect(lambda value, k=key: self.state.transcribe_values.__setitem__(k, value))
+            signal.connect(lambda value, k=key: (
+                self.state.transcribe_values.__setitem__(k, value),
+                self.state.save_to_file(),
+            ))
         self.configuration.addWidget(transcribe_config_widget)
 
         voices_config_widget = QWidget()
@@ -196,7 +200,10 @@ class MainWindow(QMainWindow):
                 control.addItems(["edge", "google"] if key == "engine" else ["", "Male", "Female"])
             vc_form.addRow(label, control)
             signal = control.currentTextChanged if isinstance(control, QComboBox) else control.textChanged
-            signal.connect(lambda value, k=key: self.state.voices_values.__setitem__(k, value))
+            signal.connect(lambda value, k=key: (
+                self.state.voices_values.__setitem__(k, value),
+                self.state.save_to_file(),
+            ))
         self.configuration.addWidget(voices_config_widget)
 
         body.addWidget(self.configuration)
@@ -333,17 +340,31 @@ class MainWindow(QMainWindow):
 
     def _run_generate(self) -> None:
         values = self.state.generate_values
-        text = self.generate_view.text_editor.toPlainText()
-        if bool(text) == bool(values["file"]):
+        text = normalize_text(self.generate_view.text_editor.toPlainText())
+        input_file = str(values["file"] or "")
+        if bool(text) == bool(input_file):
             QMessageBox.warning(self, "Input", "Hãy chọn đúng một nguồn.")
             return
         values["text"] = text
+        input_text = text
+        voice = str(values["voice"])
+        rate = str(values["rate"])
+        pitch = str(values["pitch"])
+        volume = str(values["volume"])
+        retries = int(values["retries"])
+        timeout = float(values["timeout"])
+        proxy = self._proxy_value(values)
+        engine = str(values["engine"])
+        output = Path(str(values["output"]))
+        subtitle_mode = str(values["subtitle_mode"])
+        max_words = int(values["max_words"])
+        formats = str(values["formats"])
 
         async def operation() -> int:
-            args = SimpleNamespace(text=values["text"] or None, file=values["file"] or None)
-            config = TTSConfig(str(values["voice"]).strip(), str(values["rate"]), str(values["pitch"]), str(values["volume"]), int(values["retries"]), float(values["timeout"]), self._proxy_value(values))
-            input_text = InputResolver().resolve(args).text
-            return await create_synthesis(config, str(values["engine"]), event_bus=self.event_bus, operation_id=self.operation_id).execute(input_text, Path(str(values["output"])), str(values["subtitle_mode"]), int(values["max_words"]), formats=str(values["formats"]))
+            args = SimpleNamespace(text=input_text or None, file=input_file or None)
+            config = TTSConfig(voice.strip(), rate, pitch, volume, retries, timeout, proxy)
+            resolved_text = InputResolver().resolve(args).text
+            return await create_synthesis(config, engine, event_bus=self.event_bus, operation_id=self.operation_id).execute(resolved_text, output, subtitle_mode, max_words, formats=formats)
         self._start(operation)
 
     def _run_batch(self) -> None:
@@ -437,10 +458,18 @@ class MainWindow(QMainWindow):
     def _reset_tts_config(self, values: dict[str, Any], batch: bool) -> None:
         defaults = AppState().batch_values if batch else AppState().generate_values
         self.voice_combos = [(combo, state) for combo, state in self.voice_combos if state is not values]
+        if hasattr(self, "output_inputs"):
+            self.output_inputs = [
+                (line_edit, state)
+                for line_edit, state in self.output_inputs
+                if state is not values
+            ]
         values.clear()
         values.update(defaults)
+        self.state.save_to_file()
         index = 1 if batch else 0
         old_widget = self.configuration.widget(index)
+        old_control_ids = {id(control) for control in old_widget.findChildren(QWidget)} if old_widget is not None else set()
         new_widget = TtsConfigWidget(values, batch, self)
         if old_widget is not None:
             self.configuration.removeWidget(old_widget)
@@ -451,7 +480,7 @@ class MainWindow(QMainWindow):
         self.operation_controls = [
             ctrl for ctrl in self.operation_controls 
             if not isinstance(ctrl, (QComboBox, QSpinBox, QDoubleSpinBox, QLineEdit, QPushButton)) 
-            or ctrl.parent() is not old_widget
+            or id(ctrl) not in old_control_ids
         ]
         self.operation_controls.extend(new_widget.findChildren(QWidget))
 

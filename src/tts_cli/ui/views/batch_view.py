@@ -16,7 +16,7 @@ class BatchView(QWidget):
         layout.addWidget(heading)
         layout.addWidget(QLabel("Xử lý file TXT, SRT hoặc VTT theo thứ tự."))
         
-        self.batch_directory = QLineEdit()
+        self.batch_directory = QLineEdit(str(self.main_window.state.batch_values["directory"]))
         self.batch_directory.setPlaceholderText("Thư mục nguồn")
         self.main_window.batch_directory = self.batch_directory
         self.main_window.operation_controls.append(self.batch_directory)
@@ -41,3 +41,4 @@ class BatchView(QWidget):
         if path:
             self.batch_directory.setText(path)
             self.main_window.state.batch_values["directory"] = path
+            self.main_window.state.save_to_file()
